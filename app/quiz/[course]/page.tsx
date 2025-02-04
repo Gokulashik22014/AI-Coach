@@ -1,24 +1,31 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { questions } from "../../constants/data.tsx";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { questions } from "../../constants/data";
 import Link from "next/link.js";
+type AnswerType = {
+  index: number;
+  answer: string;
+};
 const Question = ({
   data,
   index,
   submitted,
+  setAnswers,
 }: {
   data: any;
   index: number;
   submitted: boolean;
+  setAnswers:Dispatch<SetStateAction<AnswerType[]>>;
 }) => {
   const [selectedOption, setSelectedOption] = useState("");
-  const [color, setColor] = useState("bg-slate-800");
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setAnswers((old) => [...(old || []), { index: index, answer: event.target.value }]);
     setSelectedOption(event.target.value);
   };
-  const validateOption = (option:string): string => {
-    if (selectedOption === data.answer && selectedOption===option) return "bg-green-600";
-    else if (selectedOption === option) return "bg-red-400";
+  const validateOption = (option: string): string => {
+    if (selectedOption === data.answer && selectedOption === option) {
+      return "bg-green-600";
+    } else if (selectedOption === option) return "bg-red-400";
     return "bg-slate-800";
   };
   return (
@@ -49,7 +56,12 @@ const Question = ({
 };
 const CouerseQuiz = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [score, setScore] = useState<number>(0);
+  const [answers, setAnswers] = useState<AnswerType[]>([]);
   const handleScore = () => {
+    answers.map((data:AnswerType)=>{
+      if(data.answer===questions[data.index].answer) setScore(old=>old+1)
+    })
     setSubmitted(true);
   };
   return (
@@ -57,11 +69,34 @@ const CouerseQuiz = () => {
       <h1 className="text-7xl mb-12">Python Quiz</h1>
       <div>
         {questions.map((data: any, index: number) => (
-          <Question data={data} index={index} submitted={submitted} />
+          <Question
+            data={data}
+            index={index}
+            submitted={submitted}
+            key={index}
+            setAnswers={setAnswers}
+          />
         ))}
       </div>
       <div className="flex w-ful justify-end items-center gap-5">
-        {submitted && <Link href="/tutorial/python" className="bg-white text-black px-4 py-2 rounded-full">Go to your course</Link>}
+        <div className="flex space-x-4 items-center">
+          {submitted && (
+            <span className="flex space-x-3 items-center ">
+              <span className="text-white font-bold">Your score: </span>
+              <span>
+                {score}/{questions.length}
+              </span>
+            </span>
+          )}
+          {submitted && (
+            <Link
+              href="/tutorial/python"
+              className="bg-white text-black px-4 py-2 rounded-full"
+            >
+              Go to your course
+            </Link>
+          )}
+        </div>
         <button
           className="bg-green-600 px-12 py-4 rounded-full"
           onClick={handleScore}

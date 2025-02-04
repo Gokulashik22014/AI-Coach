@@ -3,29 +3,39 @@ import React, { useEffect, useState } from "react";
 import { AiOutlineSend } from "react-icons/ai";
 
 const Chat = ({videoId}:{videoId:string}) => {
-    useEffect(()=>{
-        const getData=async()=>{
-            await axios.get(`http://localhost:3000/api/video?videoId=${videoId}`).then((res)=>setContext(res.data.message))
-        }
-        getData()
-    },[])
-    const [context,setContext]=useState("")
+    // useEffect(()=>{
+    //   setLoading(true)
+    //     const getData=async()=>{
+    //         await axios.get(`http://localhost:3000/api/video?videoId=${videoId}`).then((res)=>{
+    //           return setContext(res.data.message)
+    //         })
+    //     }
+    //     getData()
+    //     // console.log(context)
+    //     if(context.length!=0){
+    //       setHistory(old=>[...(old||[]),{role:"user",parts:[{text:context}]}])
+    //       setLoading(false)
+    //     }
+    // },[])
+  const [context,setContext]=useState("")
+  const [loading,setLoading]=useState<boolean>(false)
   const [messages, setMessages] = useState<{ role: string; text: string }[]>([]);
+  const [history,setHistory]=useState<{role:string;parts:{text:string}[]}[]>([])
   const [input, setInput] = useState("");
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-
     const userMessage = { role: "user", text: input };
     try {
       const res = await axios.post("http://localhost:3000/api/ai", {
         message: input,
-        history: messages, // Send previous messages for context
+        history: history, // Send previous messages for context
         context: context || "",
       });
 
       if (res.data.response) {
         setMessages([...messages, userMessage, { role: "bot", text: res.data.response }]);
+        setHistory(res.data.history)
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -60,7 +70,7 @@ const Chat = ({videoId}:{videoId:string}) => {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()} // Send on Enter
         />
-        <button className="bg-blue-500 p-2 rounded-full text-white ml-2" onClick={sendMessage}>
+        <button className="bg-blue-500 p-2 rounded-full text-white ml-2" onClick={sendMessage} disabled={loading}>
           <AiOutlineSend className="text-xl" />
         </button>
       </div>
